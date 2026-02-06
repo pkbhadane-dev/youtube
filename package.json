@@ -4,7 +4,7 @@
   "description": "youtube project",
   "license": "ISC",
   "author": "Prashant",
-  "type": "module",
+  "type":"module",
   "main": "index.js",
   "scripts": {
     "start": "nodemon src/index.js"
