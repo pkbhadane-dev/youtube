@@ -1,5 +1,8 @@
+import dotenv from "dotenv";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+
+dotenv.config();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -13,11 +16,12 @@ export const uploadOnCloudinary = async (loacalFilePath) => {
 
     const response = await cloudinary.uploader.upload(loacalFilePath, {
       resource_type: "auto",
+      folder:"youtube"
     });
-
+ 
     fs.unlinkSync(loacalFilePath);
 
-    console.log("file successfully upload on cloudinary", response.url);
+    console.log("file successfully upload on cloudinary");
 
     return response;
   } catch (error) {
