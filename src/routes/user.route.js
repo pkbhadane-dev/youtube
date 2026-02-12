@@ -1,6 +1,7 @@
 import express from "express";
-import { userRegister } from "../controllers/user.controller.js";
+import { userLogin, userLogout, userRegister } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 const userRouter = express.Router();
 
 userRouter.route("/register").post(
@@ -13,6 +14,12 @@ userRouter.route("/register").post(
   ]),
   userRegister,
 ); // using this syntax we can use multiple methods i.e-put,get etc. for same path
+
+userRouter.route("/login").post(userLogin)
+
+userRouter.route("/logout").post(verifyJWT, userLogout)
+
+
 
 // router.post("/register", userRegister) // common and simple syntax
 
