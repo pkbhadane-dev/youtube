@@ -1,0 +1,7 @@
+{
+  "watch": ["src"],
+  "ext": "js,json" ,
+  "ignore": ["public/temp"],
+  "delay": 500,
+  "verbose": true
+}

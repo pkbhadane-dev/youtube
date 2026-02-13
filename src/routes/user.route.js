@@ -1,5 +1,5 @@
 import express from "express";
-import { userLogin, userLogout, userRegister } from "../controllers/user.controller.js";
+import { refreshAccessToken, userLogin, userLogout, userRegister } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 const userRouter = express.Router();
@@ -19,6 +19,7 @@ userRouter.route("/login").post(userLogin)
 
 userRouter.route("/logout").post(verifyJWT, userLogout)
 
+userRouter.route("/refresh").post(refreshAccessToken)
 
 
 // router.post("/register", userRegister) // common and simple syntax
