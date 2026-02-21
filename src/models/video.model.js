@@ -13,7 +13,7 @@ const videoSchema = new mongoose.Schema(
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User"
+      ref: "User",
     },
     thumbnail: {
       type: String,
@@ -34,7 +34,9 @@ const videoSchema = new mongoose.Schema(
       default: 0,
     },
   },
-  { timestamps },
+  { timestamps: true },
 );
+
+videoSchema.plugin(mongooseAggregatePaginate);
 
 export const Video = mongoose.model("Video", videoSchema);
