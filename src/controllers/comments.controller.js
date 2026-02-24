@@ -8,7 +8,7 @@ import { Video } from "../models/video.model";
 export const addComments = asyncHandler(async (req, res) => {
   const { comment } = req.body;
   const { videoId } = req.params;
-  const { userId } = req.user._id;
+  const userId = req.user._id;
 
   if (!comment) {
     throw new ApiError(400, "comment is required");
@@ -20,12 +20,12 @@ export const addComments = asyncHandler(async (req, res) => {
   const comments = await Comment.create({
     comment,
     video: videoId,
-    onwer: userId,
+    owner: userId,
   });
 
   return res
     .status(200)
-    .json(200, new ApiResponse(200, comments, "comment added successfully"));
+    .json(new ApiResponse(200, comments, "comment added successfully"));
 });
 
 export const getVideoComments = asyncHandler(async (req, res) => {
@@ -33,7 +33,7 @@ export const getVideoComments = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   const { page = 1, limit = 10, sortBy, sortType } = req.query;
 
-  const videoPipeline = Video.aggregate([
+  const pipelines = Comment.aggregate([
     {
       $match: {
         video: new mongoose.Types.ObjectId(videoId),
@@ -72,7 +72,7 @@ export const getVideoComments = asyncHandler(async (req, res) => {
         from: "users",
         localField: "owner",
         foreignField: "_id",
-        as: "ownerDeatils",
+        as: "ownerDetails",
         pipeline: [
           {
             $project: {
@@ -87,7 +87,7 @@ export const getVideoComments = asyncHandler(async (req, res) => {
     {
       $addFields: {
         owner: {
-          $first: "$ownerDeatils",
+          $first: "$ownerDetails",
         },
       },
     },
@@ -98,7 +98,7 @@ export const getVideoComments = asyncHandler(async (req, res) => {
     limit,
   };
 
-  const getVideoComments = await Video.aggregatePaginate(videoPipeline, option);
+  const getVideoComments = await Comment.aggregatePaginate(pipelines, option);
 
   return res
     .status(200)
@@ -111,16 +111,16 @@ export const updateComment = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
   if (!isValidObjectId(commentId)) {
-    throw new ApiError(400, "invalid videoId");
+    throw new ApiError(400, "invalid commentId");
   }
 
-  const comments = await Video.findById(commentId);
+  const comments = await Comment.findById(commentId);
 
   if (comments.owner.toString() !== userId?.toString()) {
     throw new ApiError(400, "you are not authorized to update the comment");
   }
 
-  await Video.findByIdAndUpdate(
+  const updatedComment = await Comment.findByIdAndUpdate(
     commentId,
     {
       $set: {
@@ -134,7 +134,7 @@ export const updateComment = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, comments, "comment updated successfully"));
+    .json(new ApiResponse(200, updatedComment, "comment updated successfully"));
 });
 
 export const deleteComment = asyncHandler(async (req, res) => {
@@ -142,14 +142,16 @@ export const deleteComment = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
   if (!isValidObjectId(commentId)) {
-    throw new ApiError(400, "invalid videoId");
+    throw new ApiError(400, "invalid commentId");
   }
 
-  const comments = await Video.findById(commentId);
+  const comments = await Comment.findById(commentId);
 
   if (comments.owner.toString() !== userId?.toString()) {
     throw new ApiError(400, "you are not authorized to delete the comment");
   }
+
+  await Comment.findByIdAndDelete(commentId);
 
   return res
     .status(200)
