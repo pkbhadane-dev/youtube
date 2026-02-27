@@ -4,7 +4,7 @@ import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
 
-export const creatPlaylist = asyncHandler(async (req, res) => {
+export const createPlaylist = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
   const userId = req.user?._id;
 
@@ -19,8 +19,8 @@ export const creatPlaylist = asyncHandler(async (req, res) => {
   });
 
   return res
-    .status(200)
-    .json(new ApiResponse(200, playlist, "Playlist created successfully"));
+    .status(201)
+    .json(new ApiResponse(201, playlist, "Playlist created successfully"));
 });
 
 export const addVideoToPlaylist = asyncHandler(async (req, res) => {
@@ -30,14 +30,22 @@ export const addVideoToPlaylist = asyncHandler(async (req, res) => {
     throw new ApiError(400, "playlist & video Id are required");
   }
 
-  const playlist = await Playlist.findById(playlistId);
-  const addVideo = (playlist.video = videoId);
-  await addVideo.save();
+  const playlist = await Playlist.findByIdAndUpdate(
+    playlistId,
+    {
+      $push: {
+        video: videoId,
+      },
+    },
+    {
+      new: true,
+    },
+  );
 
   return res
     .status(200)
     .json(
-      new ApiResponse(200, addVideo, "Video successfully added in playlist"),
+      new ApiResponse(200, playlist, "Video successfully added in playlist"),
     );
 });
 
@@ -80,8 +88,8 @@ export const getPlaylistById = asyncHandler(async (req, res) => {
           },
           {
             $addFields: {
-              onwer: {
-                $first: "$onwer",
+              owner: {
+                $first: "$owner",
               },
             },
           },
@@ -107,6 +115,8 @@ export const getUserPlaylists = asyncHandler(async (req, res) => {
       $match: {
         owner: new mongoose.Schema.Types.ObjectId(userId),
       },
+    },
+    {
       $lookup: {
         from: "videos",
         foreignField: "_id",
@@ -124,6 +134,8 @@ export const getUserPlaylists = asyncHandler(async (req, res) => {
           },
         ],
       },
+    },
+    {
       $addFields: {
         videoDetails: {
           $first: "$videoDetails",
@@ -153,16 +165,22 @@ export const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
 
   const playlist = await Playlist.findById(playlistId);
 
-  if (playlist.onwer?.toString() !== userId.toString()) {
+  if (playlist.owner?.toString() !== userId.toString()) {
     throw new ApiError(
       400,
       "you are not authorized to remove video from playlist",
     );
   }
 
-  await Playlist.findByIdAndDelete(videoId);
+  await Playlist.findByIdAndUpdate(playlistId, {
+    $pull: {
+      video: videoId,
+    },
+  });
 
-  return res(200).json(new ApiResponse(200, {}, "Video removed from playlist"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Video removed from playlist"));
 });
 
 export const updatePlaylist = asyncHandler(async (req, res) => {
